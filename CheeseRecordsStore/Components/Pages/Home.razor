@@ -1,7 +1,123 @@
 ﻿@page "/"
+@rendermode InteractiveServer
+<PageTitle>Inicio - CHEESE RECORDS</PageTitle>
 
-<PageTitle>Home</PageTitle>
+<div class="contenedor-pagina">
+    <div class="capa-oscura"></div>
 
-<h1>Hello, world!</h1>
+    <div class="menu-flotante">
+        <div class="menu-pestana">AGREGAR BEAT</div>
+        <div class="menu-contenido">
+            <h3>Nuevo Beat</h3>
+            <input @bind="nuevoNombre" placeholder="Nombre (ej. Cumbia)" class="input-menu" />
 
-Welcome to your new app.
+            <label class="etiqueta-archivo">Portada del Beat:</label>
+            <input type="file" class="input-archivo" accept="image/*" />
+
+            <button @onclick="AgregarBeat" class="btn-azul">Subir Beat</button>
+        </div>
+    </div>
+
+    <div class="contenido-principal">
+        <header class="encabezado">
+            <h1>CHEESE RECORDS</h1>
+            <p class="subtitulo">La calle y la disciplina crean el talento de barrio</p>
+        </header>
+
+        <div class="caja-busqueda">
+            <input type="text" placeholder="Buscar beats..." />
+        </div>
+
+        <section class="cuadricula-beats">
+            @foreach (var beat in listaBeats)
+            {
+                <div class="tarjeta-beat">
+                    <img src="images/@beat.ImagenUrl" alt="Portada @beat.Nombre" />
+                    <h2>@beat.Nombre</h2>
+
+                    <button class="btn-lapiz" @onclick="() => AbrirEdicion(beat)">✏️</button>
+                </div>
+            }
+        </section>
+    </div>
+
+    @if (beatEnEdicion != null)
+    {
+        <div class="modal-fondo">
+            <div class="modal-contenido">
+                <h3>Editar Beat</h3>
+                <input @bind="nombreEdicion" placeholder="Nombre" class="input-menu" />
+
+                <label class="etiqueta-archivo">Cambiar Portada:</label>
+                <input type="file" class="input-archivo" accept="image/*" />
+
+                <div class="modal-botones">
+                    <button class="btn-azul" @onclick="GuardarEdicion">Guardar</button>
+                    <button class="btn-rojo" @onclick="EliminarDesdeEdicion">Eliminar</button>
+                    <button class="btn-gris" @onclick="CerrarEdicion">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    public class Beat
+    {
+        public string Nombre { get; set; } = "";
+        public string ImagenUrl { get; set; } = "";
+    }
+
+    private List<Beat> listaBeats = new List<Beat>
+    {
+        new Beat { Nombre = "Reggaetón", ImagenUrl = "reggaeton_portada.jpg" },
+        new Beat { Nombre = "Trap", ImagenUrl = "trap_portada.jpg" },
+        new Beat { Nombre = "Hip-hop", ImagenUrl = "hiphop_portada.jpg" }
+    };
+
+    // Variables para agregar
+    private string nuevoNombre = "";
+
+    // Variables para editar (Modal)
+    private Beat? beatEnEdicion = null;
+    private string nombreEdicion = "";
+
+    private void AgregarBeat()
+    {
+        if (!string.IsNullOrWhiteSpace(nuevoNombre))
+        {
+            // Simula la subida usando una imagen por defecto hasta tener la base de datos
+            listaBeats.Add(new Beat { Nombre = nuevoNombre, ImagenUrl = "reggaeton_portada.jpg" });
+            nuevoNombre = "";
+        }
+    }
+
+    private void AbrirEdicion(Beat beat)
+    {
+        beatEnEdicion = beat;
+        nombreEdicion = beat.Nombre;
+    }
+
+    private void GuardarEdicion()
+    {
+        if (beatEnEdicion != null)
+        {
+            beatEnEdicion.Nombre = nombreEdicion;
+            beatEnEdicion = null; // Cierra el modal
+        }
+    }
+
+    private void EliminarDesdeEdicion()
+    {
+        if (beatEnEdicion != null)
+        {
+            listaBeats.Remove(beatEnEdicion);
+            beatEnEdicion = null; // Cierra el modal
+        }
+    }
+
+    private void CerrarEdicion()
+    {
+        beatEnEdicion = null; // Solo cierra el modal sin hacer nada
+    }
+}
