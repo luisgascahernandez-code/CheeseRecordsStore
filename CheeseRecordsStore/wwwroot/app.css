@@ -1,5 +1,15 @@
+/* ==========================================
+   1. ESTILOS BASE DE BLAZOR (No tocar)
+   ========================================== */
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    /* --- EL CURSOR DE LUCIÉRNAGA GLOBAL --- */
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23ffffff' stop-opacity='1'/%3E%3Cstop offset='30%25' stop-color='%23fef08a' stop-opacity='0.9'/%3E%3Cstop offset='100%25' stop-color='%23eab308' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='16' fill='url(%23g)'/%3E%3C/svg%3E") 16 16, auto;
 }
 
 a, .btn-link {
@@ -13,7 +23,7 @@ a, .btn-link {
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
 .content {
@@ -57,4 +67,280 @@ h1:focus {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
+}
+
+/* ==========================================
+   2. ESTILOS PRINCIPALES CHEESE RECORDS
+   ========================================== */
+.contenedor-pagina {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    background-color: #0c0f20;
+    background-image: url('../images/fondo-estrellas.jpg');
+    background-size: cover;
+    background-position: center;
+    color: white;
+}
+
+.capa-oscura {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3); /* Opacidad reducida al 30% */
+}
+
+.contenido-principal {
+    position: relative;
+    z-index: 1;
+    padding: 40px 20px;
+}
+
+.encabezado h1 {
+    text-align: center;
+    font-size: 3.5rem;
+    font-weight: 900;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.subtitulo {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #a8b2d1;
+    margin-bottom: 40px;
+}
+
+.caja-busqueda {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+    .caja-busqueda input {
+        width: 100%;
+        max-width: 500px;
+        padding: 15px 20px;
+        border-radius: 30px;
+        border: 1px solid #4a5568;
+        background-color: rgba(15, 23, 42, 0.8);
+        color: white;
+        font-size: 1.1rem;
+    }
+
+/* ==========================================
+   3. CUADRÍCULA Y TARJETAS DE BEATS
+   ========================================== */
+.cuadricula-beats {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.tarjeta-beat {
+    position: relative;
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    width: 250px;
+    text-align: center;
+    border-radius: 12px;
+    overflow: hidden;
+    padding-bottom: 5px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+    .tarjeta-beat:hover {
+        transform: scale(1.05);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.7);
+        z-index: 10;
+    }
+
+    .tarjeta-beat img {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .tarjeta-beat h2 {
+        font-size: 1.3rem;
+        padding: 15px;
+        margin: 0;
+    }
+
+.btn-lapiz {
+    position: absolute;
+    bottom: 12px;
+    right: 15px;
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    opacity: 0.5;
+    transition: 0.3s;
+}
+
+    .btn-lapiz:hover {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+
+/* ==========================================
+   4. MENÚ FLOTANTE Y VENTANA MODAL
+   ========================================== */
+.menu-flotante {
+    position: fixed;
+    top: 30%;
+    left: -280px;
+    width: 280px;
+    background-color: rgba(15, 23, 42, 0.95);
+    border: 1px solid #334155;
+    border-radius: 0 15px 15px 0;
+    padding: 20px;
+    transition: left 0.4s ease-in-out;
+    z-index: 2000;
+}
+
+    .menu-flotante:hover {
+        left: 0;
+    }
+
+.menu-pestana {
+    position: absolute;
+    right: -40px;
+    top: 20px;
+    background-color: #1e293b;
+    padding: 15px 5px;
+    border-radius: 0 10px 10px 0;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    color: white;
+    font-weight: bold;
+    border: 1px solid #334155;
+    border-left: none;
+}
+
+.menu-contenido h3 {
+    margin-top: 0;
+    font-size: 1.2rem;
+    color: white;
+    text-align: center;
+}
+
+.input-menu {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    border: 1px solid #4a5568;
+    background-color: #0c0f20;
+    color: white;
+    box-sizing: border-box;
+}
+
+.modal-fondo {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 3000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-contenido {
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    padding: 30px;
+    border-radius: 15px;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+    .modal-contenido h3 {
+        margin-top: 0;
+        color: white;
+        margin-bottom: 20px;
+    }
+
+.modal-botones {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* ==========================================
+   5. BOTONES Y UTILIDADES
+   ========================================== */
+.btn-azul {
+    width: 100%;
+    padding: 10px;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    transition: 0.3s;
+}
+
+    .btn-azul:hover {
+        background-color: #2563eb;
+    }
+
+.btn-rojo {
+    width: 100%;
+    padding: 10px;
+    background-color: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    transition: 0.3s;
+}
+
+    .btn-rojo:hover {
+        background-color: #b91c1c;
+    }
+
+.btn-gris {
+    width: 100%;
+    padding: 10px;
+    background-color: transparent;
+    color: #94a3b8;
+    border: 1px solid #4a5568;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+    .btn-gris:hover {
+        background-color: #334155;
+        color: white;
+    }
+
+.etiqueta-archivo {
+    display: block;
+    color: #a8b2d1;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    text-align: left;
+}
+
+.input-archivo {
+    width: 100%;
+    color: #a8b2d1;
+    margin-bottom: 20px;
+    font-size: 0.85rem;
+}
+
+/* Mantiene la manita para saber en dónde hacer clic */
+.btn-azul, .btn-rojo, .btn-gris, .btn-lapiz, .menu-pestana, input, a {
+    cursor: pointer;
 }
