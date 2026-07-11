@@ -1,5 +1,14 @@
 ﻿@page "/"
 @rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@using System.IO
+@using CheeseRecordsStore.Models
+@using CheeseRecordsStore.Data
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Hosting
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject IWebHostEnvironment Env
+
 <PageTitle>Inicio - CHEESE RECORDS</PageTitle>
 
 <div class="contenedor-pagina">
@@ -9,34 +18,41 @@
         <div class="menu-pestana">AGREGAR BEAT</div>
         <div class="menu-contenido">
             <h3>Nuevo Beat</h3>
-            <input @bind="nuevoNombre" placeholder="Nombre (ej. Cumbia)" class="input-menu" />
+            <EditForm Model="beatFormulario" OnValidSubmit="AgregarBeat">
+                <DataAnnotationsValidator />
+                <InputText @bind-Value="beatFormulario.Nombre" placeholder="Nombre (ej. Cumbia)" class="input-menu" />
+                <ValidationMessage For="@(() => beatFormulario.Nombre)" class="texto-error" />
 
-            <label class="etiqueta-archivo">Portada del Beat:</label>
-            <input type="file" class="input-archivo" accept="image/*" />
+                <label class="etiqueta-archivo">Portada del Beat:</label>
+                <InputFile OnChange="CargarImagen" class="input-menu" accept="image/*" />
+                <ValidationMessage For="@(() => beatFormulario.ImagenUrl)" class="texto-error" />
 
-            <button @onclick="AgregarBeat" class="btn-azul">Subir Beat</button>
+                <button type="submit" class="btn-azul">Subir Beat</button>
+            </EditForm>
         </div>
     </div>
 
     <div class="contenido-principal">
         <header class="encabezado">
             <h1>CHEESE RECORDS</h1>
-            <p class="subtitulo">La calle y la disciplina crean el talento de barrio</p>
+            <p class="subtitulo">La calle y la disciplina crean el talento de barrio | Repartiendo el queso</p>
         </header>
 
-        <div class="caja-busqueda">
-            <input type="text" placeholder="Buscar beats..." />
-        </div>
-
         <section class="cuadricula-beats">
-            @foreach (var beat in listaBeats)
+            @if (listaBeats == null)
             {
-                <div class="tarjeta-beat">
-                    <img src="images/@beat.ImagenUrl" alt="Portada @beat.Nombre" />
-                    <h2>@beat.Nombre</h2>
-
-                    <button class="btn-lapiz" @onclick="() => AbrirEdicion(beat)">✏️</button>
-                </div>
+                <p>Cargando...</p>
+            }
+            else
+            {
+                @foreach (var beat in listaBeats)
+                {
+                    <div class="tarjeta-beat">
+                        <img src="images/@beat.ImagenUrl" alt="Portada @beat.Nombre" />
+                        <h2>@beat.Nombre</h2>
+                        <button class="btn-lapiz" @onclick="() => AbrirEdicion(beat)">✏️</button>
+                    </div>
+                }
             }
         </section>
     </div>
@@ -47,10 +63,6 @@
             <div class="modal-contenido">
                 <h3>Editar Beat</h3>
                 <input @bind="nombreEdicion" placeholder="Nombre" class="input-menu" />
-
-                <label class="etiqueta-archivo">Cambiar Portada:</label>
-                <input type="file" class="input-archivo" accept="image/*" />
-
                 <div class="modal-botones">
                     <button class="btn-azul" @onclick="GuardarEdicion">Guardar</button>
                     <button class="btn-rojo" @onclick="EliminarDesdeEdicion">Eliminar</button>
@@ -62,62 +74,85 @@
 </div>
 
 @code {
-    public class Beat
-    {
-        public string Nombre { get; set; } = "";
-        public string ImagenUrl { get; set; } = "";
-    }
-
-    private List<Beat> listaBeats = new List<Beat>
-    {
-        new Beat { Nombre = "Reggaetón", ImagenUrl = "reggaeton_portada.jpg" },
-        new Beat { Nombre = "Trap", ImagenUrl = "trap_portada.jpg" },
-        new Beat { Nombre = "Hip-hop", ImagenUrl = "hiphop_portada.jpg" }
-    };
-
-    // Variables para agregar
-    private string nuevoNombre = "";
-
-    // Variables para editar (Modal)
+    private List<Beat> listaBeats = new();
+    private Beat beatFormulario = new();
     private Beat? beatEnEdicion = null;
     private string nombreEdicion = "";
+    private IBrowserFile? archivoSeleccionado; // Variable para mantener el archivo en memoria
 
-    private void AgregarBeat()
+    protected override async Task OnInitializedAsync()
     {
-        if (!string.IsNullOrWhiteSpace(nuevoNombre))
+        using var context = DbFactory.CreateDbContext();
+        listaBeats = await context.Beats.ToListAsync();
+    }
+
+    private async Task AgregarBeat()
+    {
+        // 1. Guardar el archivo físico en wwwroot/images si se seleccionó uno
+        if (archivoSeleccionado != null)
         {
-            // Simula la subida usando una imagen por defecto hasta tener la base de datos
-            listaBeats.Add(new Beat { Nombre = nuevoNombre, ImagenUrl = "reggaeton_portada.jpg" });
-            nuevoNombre = "";
+            var rutaCarpeta = Path.Combine(Env.WebRootPath, "images");
+
+            // Crea la carpeta "images" si no existe
+            if (!Directory.Exists(rutaCarpeta))
+            {
+                Directory.CreateDirectory(rutaCarpeta);
+            }
+
+            var rutaArchivo = Path.Combine(rutaCarpeta, archivoSeleccionado.Name);
+
+            // Copia el archivo (límite de tamaño ajustado a ~5MB)
+            using var stream = new FileStream(rutaArchivo, FileMode.Create);
+            await archivoSeleccionado.OpenReadStream(maxAllowedSize: 15000000).CopyToAsync(stream);
+        }
+
+        // 2. Guardar los datos en la base de datos
+        using var context = DbFactory.CreateDbContext();
+        context.Beats.Add(beatFormulario);
+        await context.SaveChangesAsync();
+
+        listaBeats = await context.Beats.ToListAsync();
+
+        // 3. Limpiar el formulario
+        beatFormulario = new();
+        archivoSeleccionado = null;
+    }
+
+    private void CargarImagen(InputFileChangeEventArgs e)
+    {
+        if (e.File != null)
+        {
+            archivoSeleccionado = e.File;
+            beatFormulario.ImagenUrl = e.File.Name;
         }
     }
 
-    private void AbrirEdicion(Beat beat)
-    {
-        beatEnEdicion = beat;
-        nombreEdicion = beat.Nombre;
-    }
+    private void AbrirEdicion(Beat beat) { beatEnEdicion = beat; nombreEdicion = beat.Nombre; }
 
-    private void GuardarEdicion()
+    private async Task GuardarEdicion()
     {
         if (beatEnEdicion != null)
         {
+            using var context = DbFactory.CreateDbContext();
             beatEnEdicion.Nombre = nombreEdicion;
-            beatEnEdicion = null; // Cierra el modal
+            context.Beats.Update(beatEnEdicion);
+            await context.SaveChangesAsync();
+            listaBeats = await context.Beats.ToListAsync();
+            beatEnEdicion = null;
         }
     }
 
-    private void EliminarDesdeEdicion()
+    private async Task EliminarDesdeEdicion()
     {
         if (beatEnEdicion != null)
         {
-            listaBeats.Remove(beatEnEdicion);
-            beatEnEdicion = null; // Cierra el modal
+            using var context = DbFactory.CreateDbContext();
+            context.Beats.Remove(beatEnEdicion);
+            await context.SaveChangesAsync();
+            listaBeats = await context.Beats.ToListAsync();
+            beatEnEdicion = null;
         }
     }
 
-    private void CerrarEdicion()
-    {
-        beatEnEdicion = null; // Solo cierra el modal sin hacer nada
-    }
+    private void CerrarEdicion() => beatEnEdicion = null;
 }
