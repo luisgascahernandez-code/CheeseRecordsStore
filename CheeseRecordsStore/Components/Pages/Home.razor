@@ -20,10 +20,25 @@
             <h3>Nuevo Beat</h3>
             <EditForm Model="beatFormulario" OnValidSubmit="AgregarBeat">
                 <DataAnnotationsValidator />
-                <InputText @bind-Value="beatFormulario.Nombre" placeholder="Nombre (ej. Cumbia)" class="input-menu" />
+
+                <InputText @bind-Value="beatFormulario.Nombre" placeholder="Nombre de la pista" class="input-menu" />
                 <ValidationMessage For="@(() => beatFormulario.Nombre)" class="texto-error" />
 
-                <label class="etiqueta-archivo">Portada del Beat:</label>
+                <!-- Menú desplegable para el Género -->
+                <label class="etiqueta-archivo" style="margin-top: 10px;">Género Musical:</label>
+                <InputSelect @bind-Value="beatFormulario.Genero" class="input-menu">
+                    <option value="Cumbia">Cumbia</option>
+                    <option value="Reggeaton">Reggeaton</option>
+                    <option value="HipHop">Hip-Hop</option>
+                    <option value="Trap">Trap</option>
+                    <option value="Rap">Rap</option>
+                    <option value="Corridos">Corridos</option>
+                    <option value="Dembow">Dembow</option>
+                    <option value="RnB">R&B</option>
+                    <option value="Pop">Pop</option>
+                </InputSelect>
+
+                <label class="etiqueta-archivo" style="margin-top: 10px;">Portada del Beat:</label>
                 <InputFile OnChange="CargarImagen" class="input-menu" accept="image/*" />
                 <ValidationMessage For="@(() => beatFormulario.ImagenUrl)" class="texto-error" />
 
@@ -50,6 +65,8 @@
                     <div class="tarjeta-beat">
                         <img src="images/@beat.ImagenUrl" alt="Portada @beat.Nombre" />
                         <h2>@beat.Nombre</h2>
+                        <!-- Muestra el género en la tarjeta -->
+                        <p style="color: #ccc; font-size: 0.9em; margin-bottom: 10px;">@beat.Genero</p>
                         <button class="btn-lapiz" @onclick="() => AbrirEdicion(beat)">✏️</button>
                     </div>
                 }
@@ -63,6 +80,20 @@
             <div class="modal-contenido">
                 <h3>Editar Beat</h3>
                 <input @bind="nombreEdicion" placeholder="Nombre" class="input-menu" />
+
+                <!-- Menú desplegable para editar el Género -->
+                <select @bind="generoEdicion" class="input-menu" style="margin-top: 10px; margin-bottom: 15px;">
+                    <option value="Cumbia">Cumbia</option>
+                    <option value="Reggeaton">Reggeaton</option>
+                    <option value="HipHop">Hip-Hop</option>
+                    <option value="Trap">Trap</option>
+                    <option value="Rap">Rap</option>
+                    <option value="Corridos">Corridos</option>
+                    <option value="Dembow">Dembow</option>
+                    <option value="RnB">R&B</option>
+                    <option value="Pop">Pop</option>
+                </select>
+
                 <div class="modal-botones">
                     <button class="btn-azul" @onclick="GuardarEdicion">Guardar</button>
                     <button class="btn-rojo" @onclick="EliminarDesdeEdicion">Eliminar</button>
@@ -78,7 +109,8 @@
     private Beat beatFormulario = new();
     private Beat? beatEnEdicion = null;
     private string nombreEdicion = "";
-    private IBrowserFile? archivoSeleccionado; // Variable para mantener el archivo en memoria
+    private GeneroMusical generoEdicion; // Variable para mantener el género en edición
+    private IBrowserFile? archivoSeleccionado;
 
     protected override async Task OnInitializedAsync()
     {
@@ -88,32 +120,23 @@
 
     private async Task AgregarBeat()
     {
-        // 1. Guardar el archivo físico en wwwroot/images si se seleccionó uno
         if (archivoSeleccionado != null)
         {
             var rutaCarpeta = Path.Combine(Env.WebRootPath, "images");
-
-            // Crea la carpeta "images" si no existe
             if (!Directory.Exists(rutaCarpeta))
             {
                 Directory.CreateDirectory(rutaCarpeta);
             }
-
             var rutaArchivo = Path.Combine(rutaCarpeta, archivoSeleccionado.Name);
-
-            // Copia el archivo (límite de tamaño ajustado a ~5MB)
             using var stream = new FileStream(rutaArchivo, FileMode.Create);
             await archivoSeleccionado.OpenReadStream(maxAllowedSize: 15000000).CopyToAsync(stream);
         }
 
-        // 2. Guardar los datos en la base de datos
         using var context = DbFactory.CreateDbContext();
         context.Beats.Add(beatFormulario);
         await context.SaveChangesAsync();
 
         listaBeats = await context.Beats.ToListAsync();
-
-        // 3. Limpiar el formulario
         beatFormulario = new();
         archivoSeleccionado = null;
     }
@@ -127,7 +150,12 @@
         }
     }
 
-    private void AbrirEdicion(Beat beat) { beatEnEdicion = beat; nombreEdicion = beat.Nombre; }
+    private void AbrirEdicion(Beat beat)
+    {
+        beatEnEdicion = beat;
+        nombreEdicion = beat.Nombre;
+        generoEdicion = beat.Genero; // Asigna el género actual para que aparezca en el modal
+    }
 
     private async Task GuardarEdicion()
     {
@@ -135,6 +163,7 @@
         {
             using var context = DbFactory.CreateDbContext();
             beatEnEdicion.Nombre = nombreEdicion;
+            beatEnEdicion.Genero = generoEdicion; // Guarda el cambio de género
             context.Beats.Update(beatEnEdicion);
             await context.SaveChangesAsync();
             listaBeats = await context.Beats.ToListAsync();
