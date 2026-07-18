@@ -1,0 +1,105 @@
+﻿@page "/dashboard"
+@rendermode InteractiveServer
+@using CheeseRecordsStore.Models
+@using CheeseRecordsStore.Data
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<PageTitle>Dashboard - CHEESE RECORDS</PageTitle>
+
+<div class="contenedor-pagina">
+    <div class="capa-oscura"></div>
+
+    <div class="contenido-principal" style="position: relative; z-index: 10;">
+
+        <!-- BARRA UNIFICADA -->
+        <nav style="background: rgba(17, 17, 17, 0.9); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f39c12; margin-bottom: 20px; border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 30px;">
+                <h2 style="color: #f39c12; margin: 0; font-size: 2.5em; font-weight: 900; letter-spacing: 1px;">CHEESE RECORDS</h2>
+                <a href="/" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">💿 Catálogo</a>
+                <a href="/dashboard" style="color: #f39c12; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">📊 Dashboard</a>
+                <a href="/artistas" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">🎤 Crew</a>
+            </div>
+            <!-- Contrapeso derecho invisible -->
+            <div style="width: 180px;"></div>
+        </nav>
+
+        <!-- LEMA SIEMPRE VISIBLE -->
+        <header style="text-align: center; margin-bottom: 45px; margin-top: 10px;">
+            <p style="color: #e0e0e0; font-size: 1.35em; font-style: italic; letter-spacing: 1.5px; font-weight: 500; text-shadow: 1px 1px 3px rgba(0,0,0,0.8);">
+                "Hijos de la suerte | La calle y la disciplina crean el talento de barrio | Repartiendo el queso"
+            </p>
+        </header>
+
+        <!-- TARJETAS CON EFECTO HOVER Y GRÁFICAS -->
+        <section class="dashboard-stats" style="background: rgba(17, 17, 17, 0.8); padding: 30px; border-radius: 10px; border: 1px solid #333;">
+            <h3 style="color: #fff; margin-bottom: 20px; font-size: 1.5em;">📊 Estadísticas de Producción</h3>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+
+                <div style="background: #222; padding: 20px 30px; border-radius: 8px; text-align: center; border-left: 4px solid #f39c12; min-width: 150px;">
+                    <p style="color: #aaa; margin: 0; font-size: 0.9em; font-weight: bold; text-transform: uppercase;">Total de Pistas</p>
+                    <h2 style="color: #fff; margin: 10px 0 0 0; font-size: 2.5em;">@totalBeats</h2>
+                </div>
+
+                @foreach (var stat in beatsPorGenero)
+                {
+                    <div style="background: #222; padding: 20px 30px; border-radius: 8px; text-align: center; border-left: 4px solid #3498db; min-width: 150px; position: relative; cursor: pointer;"
+                         @onmouseover="() => MostrarCanciones(stat.Key.ToString())"
+                         @onmouseout="OcultarCanciones">
+
+                        <p style="color: #aaa; margin: 0; font-size: 0.9em; font-weight: bold; text-transform: uppercase;">@stat.Key</p>
+                        <h2 style="color: #fff; margin: 10px 0 0 0; font-size: 2.5em;">@stat.Value</h2>
+
+                        @if (generoSeleccionado == stat.Key.ToString())
+                        {
+                            <div style="position: absolute; top: 100%; left: 0; width: 100%; background: #444; border-radius: 5px; padding: 10px; margin-top: 5px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); z-index: 100;">
+                                @foreach (var cancion in listaBeats.Where(b => b.Genero == stat.Key))
+                                {
+                                    <p style="color: white; margin: 5px 0; font-size: 0.8em; text-align: left; border-bottom: 1px solid #555; padding-bottom: 2px;">🎵 @cancion.Nombre</p>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div style="margin-top: 40px; border-top: 1px solid #444; padding-top: 20px;">
+                <h4 style="color: #f39c12; margin-bottom: 20px;">📈 Distribución de Catálogo</h4>
+
+                @foreach (var stat in beatsPorGenero)
+                {
+                    double porcentaje = totalBeats > 0 ? ((double)stat.Value / totalBeats) * 100 : 0;
+
+                    <div style="margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span style="color: #ccc; font-weight: bold;">@stat.Key</span>
+                            <span style="color: #aaa; font-size: 0.9em;">@stat.Value pistas (@porcentaje.ToString("0.0")%)</span>
+                        </div>
+                        <div style="width: 100%; background: #333; border-radius: 10px; height: 18px; overflow: hidden;">
+                            <div style="width: @Math.Round(porcentaje)%; background: linear-gradient(90deg, #3498db, #2ecc71); height: 100%; transition: width 0.5s ease-in-out;"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+    </div>
+</div>
+
+@code {
+    private int totalBeats = 0;
+    private List<Beat> listaBeats = new();
+    private Dictionary<GeneroMusical, int> beatsPorGenero = new();
+
+    private string generoSeleccionado = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        listaBeats = await context.Beats.ToListAsync();
+        totalBeats = listaBeats.Count;
+        beatsPorGenero = listaBeats.GroupBy(b => b.Genero).ToDictionary(g => g.Key, g => g.Count());
+    }
+
+    private void MostrarCanciones(string genero) => generoSeleccionado = genero;
+    private void OcultarCanciones() => generoSeleccionado = "";
+}

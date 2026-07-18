@@ -14,45 +14,32 @@
 <div class="contenedor-pagina">
     <div class="capa-oscura"></div>
 
-    <div class="menu-flotante">
-        <div class="menu-pestana">AGREGAR BEAT</div>
-        <div class="menu-contenido">
-            <h3>Nuevo Beat</h3>
-            <EditForm Model="beatFormulario" OnValidSubmit="AgregarBeat">
-                <DataAnnotationsValidator />
+    <div class="contenido-principal" style="position: relative; z-index: 10;">
 
-                <InputText @bind-Value="beatFormulario.Nombre" placeholder="Nombre de la pista" class="input-menu" />
-                <ValidationMessage For="@(() => beatFormulario.Nombre)" class="texto-error" />
+        <!-- BARRA UNIFICADA -->
+        <nav style="background: rgba(17, 17, 17, 0.9); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f39c12; margin-bottom: 20px; border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 30px;">
+                <h2 style="color: #f39c12; margin: 0; font-size: 2.5em; font-weight: 900; letter-spacing: 1px;">CHEESE RECORDS</h2>
+                <a href="/" style="color: #f39c12; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">💿 Catálogo</a>
+                <a href="/dashboard" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">📊 Dashboard</a>
+                <a href="/artistas" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">🎤 Crew</a>
+            </div>
+            <!-- Contrapeso derecho -->
+            <div style="width: 180px; text-align: right;">
+                <button class="btn-azul" @onclick="AbrirModalAgregar" style="width: 100%; padding: 10px 20px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                    ➕ Agregar Beat
+                </button>
+            </div>
+        </nav>
 
-                <!-- Menú desplegable para el Género -->
-                <label class="etiqueta-archivo" style="margin-top: 10px;">Género Musical:</label>
-                <InputSelect @bind-Value="beatFormulario.Genero" class="input-menu">
-                    <option value="Cumbia">Cumbia</option>
-                    <option value="Reggeaton">Reggeaton</option>
-                    <option value="HipHop">Hip-Hop</option>
-                    <option value="Trap">Trap</option>
-                    <option value="Rap">Rap</option>
-                    <option value="Corridos">Corridos</option>
-                    <option value="Dembow">Dembow</option>
-                    <option value="RnB">R&B</option>
-                    <option value="Pop">Pop</option>
-                </InputSelect>
-
-                <label class="etiqueta-archivo" style="margin-top: 10px;">Portada del Beat:</label>
-                <InputFile OnChange="CargarImagen" class="input-menu" accept="image/*" />
-                <ValidationMessage For="@(() => beatFormulario.ImagenUrl)" class="texto-error" />
-
-                <button type="submit" class="btn-azul">Subir Beat</button>
-            </EditForm>
-        </div>
-    </div>
-
-    <div class="contenido-principal">
-        <header class="encabezado">
-            <h1>CHEESE RECORDS</h1>
-            <p class="subtitulo">La calle y la disciplina crean el talento de barrio | Repartiendo el queso</p>
+        <!-- LEMA SIEMPRE VISIBLE -->
+        <header style="text-align: center; margin-bottom: 45px; margin-top: 10px;">
+            <p style="color: #e0e0e0; font-size: 1.35em; font-style: italic; letter-spacing: 1.5px; font-weight: 500; text-shadow: 1px 1px 3px rgba(0,0,0,0.8);">
+                "Hijos de la suerte | La calle y la disciplina crean el talento de barrio | Repartiendo el queso"
+            </p>
         </header>
 
+        <!-- CATÁLOGO DE BEATS -->
         <section class="cuadricula-beats">
             @if (listaBeats == null)
             {
@@ -65,15 +52,66 @@
                     <div class="tarjeta-beat">
                         <img src="images/@beat.ImagenUrl" alt="Portada @beat.Nombre" />
                         <h2>@beat.Nombre</h2>
-                        <!-- Muestra el género en la tarjeta -->
                         <p style="color: #ccc; font-size: 0.9em; margin-bottom: 10px;">@beat.Genero</p>
                         <button class="btn-lapiz" @onclick="() => AbrirEdicion(beat)">✏️</button>
                     </div>
                 }
             }
         </section>
+
+        <!-- BANNER DE CONTACTO (EFECTO CRISTAL NARANJA) -->
+        <section style="background: rgba(243, 156, 18, 0.4); backdrop-filter: blur(6px); border: 1px solid rgba(243, 156, 18, 0.5); padding: 40px 20px; border-radius: 10px; margin-top: 50px; margin-bottom: 20px; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.5);">
+            <h2 style="color: #fff; margin-bottom: 15px; font-weight: 900; font-size: 2.2em; text-transform: uppercase; text-shadow: 2px 2px 5px rgba(0,0,0,0.8);">¿Listo para grabar?</h2>
+            <p style="color: #eee; font-size: 1.2em; font-weight: bold; max-width: 600px; margin: 0 auto 25px auto; text-shadow: 1px 1px 4px rgba(0,0,0,0.9);">
+                ¿Te apasiona la música y no sabes por dónde empezar? En Cheese Records te producimos. Contáctanos y hagamos el próximo hit.
+            </p>
+            <a href="https://wa.me/522231759353?text=¡Qué%20onda!%20Vengo%20de%20la%20página%20de%20Cheese%20Records%20y%20quiero%20hacer%20un%20hit."
+               target="_blank"
+               style="display: inline-block; background: #111; color: #f39c12; padding: 15px 35px; border-radius: 30px; font-weight: bold; font-size: 1.2em; text-decoration: none; box-shadow: 0 5px 15px rgba(0,0,0,0.6); transition: transform 0.2s;">
+                💬 Enviar mensaje
+            </a>
+        </section>
+
     </div>
 
+    <!-- MODAL AGREGAR BEAT -->
+    @if (mostrarModalAgregar)
+    {
+        <div class="modal-fondo">
+            <div class="modal-contenido">
+                <h3>Nuevo Beat</h3>
+                <EditForm Model="beatFormulario" OnValidSubmit="AgregarBeat">
+                    <DataAnnotationsValidator />
+                    <InputText @bind-Value="beatFormulario.Nombre" placeholder="Nombre de la pista" class="input-menu" />
+                    <ValidationMessage For="@(() => beatFormulario.Nombre)" class="texto-error" />
+
+                    <label class="etiqueta-archivo" style="margin-top: 10px; display: block;">Género Musical:</label>
+                    <InputSelect @bind-Value="beatFormulario.Genero" class="input-menu">
+                        <option value="Cumbia">Cumbia</option>
+                        <option value="Reggeaton">Reggeaton</option>
+                        <option value="HipHop">Hip-Hop</option>
+                        <option value="Trap">Trap</option>
+                        <option value="Rap">Rap</option>
+                        <option value="Corridos">Corridos</option>
+                        <option value="Dembow">Dembow</option>
+                        <option value="RnB">R&B</option>
+                        <option value="Pop">Pop</option>
+                    </InputSelect>
+
+                    <label class="etiqueta-archivo" style="margin-top: 10px; display: block;">Portada del Beat:</label>
+                    <InputFile OnChange="CargarImagen" class="input-menu" accept="image/*" />
+                    <ValidationMessage For="@(() => beatFormulario.ImagenUrl)" class="texto-error" />
+
+                    <div class="modal-botones" style="margin-top: 20px;">
+                        <button type="submit" class="btn-azul">Subir Beat</button>
+                        <button type="button" class="btn-gris" @onclick="CerrarModalAgregar">Cancelar</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    }
+
+    <!-- MODAL EDITAR BEAT -->
     @if (beatEnEdicion != null)
     {
         <div class="modal-fondo">
@@ -81,7 +119,6 @@
                 <h3>Editar Beat</h3>
                 <input @bind="nombreEdicion" placeholder="Nombre" class="input-menu" />
 
-                <!-- Menú desplegable para editar el Género -->
                 <select @bind="generoEdicion" class="input-menu" style="margin-top: 10px; margin-bottom: 15px;">
                     <option value="Cumbia">Cumbia</option>
                     <option value="Reggeaton">Reggeaton</option>
@@ -109,8 +146,9 @@
     private Beat beatFormulario = new();
     private Beat? beatEnEdicion = null;
     private string nombreEdicion = "";
-    private GeneroMusical generoEdicion; // Variable para mantener el género en edición
+    private GeneroMusical generoEdicion;
     private IBrowserFile? archivoSeleccionado;
+    private bool mostrarModalAgregar = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -118,15 +156,19 @@
         listaBeats = await context.Beats.ToListAsync();
     }
 
+    private void AbrirModalAgregar() => mostrarModalAgregar = true;
+    private void CerrarModalAgregar()
+    {
+        mostrarModalAgregar = false;
+        beatFormulario = new();
+    }
+
     private async Task AgregarBeat()
     {
         if (archivoSeleccionado != null)
         {
             var rutaCarpeta = Path.Combine(Env.WebRootPath, "images");
-            if (!Directory.Exists(rutaCarpeta))
-            {
-                Directory.CreateDirectory(rutaCarpeta);
-            }
+            if (!Directory.Exists(rutaCarpeta)) Directory.CreateDirectory(rutaCarpeta);
             var rutaArchivo = Path.Combine(rutaCarpeta, archivoSeleccionado.Name);
             using var stream = new FileStream(rutaArchivo, FileMode.Create);
             await archivoSeleccionado.OpenReadStream(maxAllowedSize: 15000000).CopyToAsync(stream);
@@ -135,10 +177,11 @@
         using var context = DbFactory.CreateDbContext();
         context.Beats.Add(beatFormulario);
         await context.SaveChangesAsync();
-
         listaBeats = await context.Beats.ToListAsync();
+
         beatFormulario = new();
         archivoSeleccionado = null;
+        mostrarModalAgregar = false;
     }
 
     private void CargarImagen(InputFileChangeEventArgs e)
@@ -154,7 +197,7 @@
     {
         beatEnEdicion = beat;
         nombreEdicion = beat.Nombre;
-        generoEdicion = beat.Genero; // Asigna el género actual para que aparezca en el modal
+        generoEdicion = beat.Genero;
     }
 
     private async Task GuardarEdicion()
@@ -163,7 +206,7 @@
         {
             using var context = DbFactory.CreateDbContext();
             beatEnEdicion.Nombre = nombreEdicion;
-            beatEnEdicion.Genero = generoEdicion; // Guarda el cambio de género
+            beatEnEdicion.Genero = generoEdicion;
             context.Beats.Update(beatEnEdicion);
             await context.SaveChangesAsync();
             listaBeats = await context.Beats.ToListAsync();
