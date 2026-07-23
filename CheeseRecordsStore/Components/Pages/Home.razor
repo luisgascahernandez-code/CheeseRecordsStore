@@ -20,9 +20,9 @@
         <nav style="background: rgba(17, 17, 17, 0.9); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f39c12; margin-bottom: 20px; border-radius: 8px;">
             <div style="display: flex; align-items: center; gap: 30px;">
                 <h2 style="color: #f39c12; margin: 0; font-size: 2.5em; font-weight: 900; letter-spacing: 1px;">CHEESE RECORDS</h2>
-                <a href="/" style="color: #f39c12; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">💿 Catálogo</a>
-                <a href="/dashboard" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">📊 Dashboard</a>
-                <a href="/artistas" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">🎤 Crew</a>
+                <a href="/" style="color: #f39c12; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">Catálogo</a>
+                <a href="/dashboard" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">Dashboard</a>
+                <a href="/artistas" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">Crew</a>
             </div>
             <!-- Contrapeso derecho -->
             <div style="width: 180px; text-align: right;">
@@ -52,7 +52,8 @@
                     <div class="tarjeta-beat">
                         <img src="images/@beat.ImagenUrl" alt="Portada @beat.Nombre" />
                         <h2>@beat.Nombre</h2>
-                        <p style="color: #ccc; font-size: 0.9em; margin-bottom: 10px;">@beat.Genero</p>
+                        <!-- Aquí leemos el nombre del género desde la nueva tabla relacionada -->
+                        <p style="color: #ccc; font-size: 0.9em; margin-bottom: 10px;">@(beat.Genero?.Nombre ?? "Sin género")</p>
                         <button class="btn-lapiz" @onclick="() => AbrirEdicion(beat)">✏️</button>
                     </div>
                 }
@@ -80,13 +81,22 @@
         <div class="modal-fondo">
             <div class="modal-contenido">
                 <h3>Nuevo Beat</h3>
+
+                <!-- SEGURO ANTI-DUPLICADOS (Alerta visual) -->
+                @if (!string.IsNullOrEmpty(mensajeError))
+                {
+                    <div style="background-color: #e74c3c; color: white; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-weight: bold; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                        ⚠️ @mensajeError
+                    </div>
+                }
+
                 <EditForm Model="beatFormulario" OnValidSubmit="AgregarBeat">
                     <DataAnnotationsValidator />
                     <InputText @bind-Value="beatFormulario.Nombre" placeholder="Nombre de la pista" class="input-menu" />
                     <ValidationMessage For="@(() => beatFormulario.Nombre)" class="texto-error" />
 
                     <label class="etiqueta-archivo" style="margin-top: 10px; display: block;">Género Musical:</label>
-                    <InputSelect @bind-Value="beatFormulario.Genero" class="input-menu">
+                    <InputSelect @bind-Value="generoFormulario" class="input-menu">
                         <option value="Cumbia">Cumbia</option>
                         <option value="Reggeaton">Reggeaton</option>
                         <option value="HipHop">Hip-Hop</option>
@@ -145,26 +155,51 @@
     private List<Beat> listaBeats = new();
     private Beat beatFormulario = new();
     private Beat? beatEnEdicion = null;
+
+    // Variables para los formularios y alertas
     private string nombreEdicion = "";
-    private GeneroMusical generoEdicion;
+    private string generoEdicion = "Trap";
+    private string generoFormulario = "Trap";
+    private string mensajeError = "";
+
     private IBrowserFile? archivoSeleccionado;
     private bool mostrarModalAgregar = false;
 
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        listaBeats = await context.Beats.ToListAsync();
+        // Include(b => b.Genero) asegura que traigamos los datos de la tabla relacionada
+        listaBeats = await context.Beats.Include(b => b.Genero).ToListAsync();
     }
 
-    private void AbrirModalAgregar() => mostrarModalAgregar = true;
+    private void AbrirModalAgregar()
+    {
+        mensajeError = "";
+        mostrarModalAgregar = true;
+    }
+
     private void CerrarModalAgregar()
     {
         mostrarModalAgregar = false;
+        mensajeError = "";
         beatFormulario = new();
     }
 
     private async Task AgregarBeat()
     {
+        using var context = DbFactory.CreateDbContext();
+
+        // 1. VALIDACIÓN ANTI-DUPLICADOS
+        bool yaExiste = await context.Beats.AnyAsync(b => b.Nombre.ToLower() == beatFormulario.Nombre.ToLower());
+        if (yaExiste)
+        {
+            mensajeError = $"¡El beat '{beatFormulario.Nombre}' ya existe en el catálogo! Ingresa un nombre diferente.";
+            return; // Detiene el proceso para que no se duplique
+        }
+
+        mensajeError = ""; // Limpiamos el error si pasa la validación
+
+        // 2. GUARDADO DE IMAGEN
         if (archivoSeleccionado != null)
         {
             var rutaCarpeta = Path.Combine(Env.WebRootPath, "images");
@@ -174,10 +209,23 @@
             await archivoSeleccionado.OpenReadStream(maxAllowedSize: 15000000).CopyToAsync(stream);
         }
 
-        using var context = DbFactory.CreateDbContext();
+        // 3. USO DE LA TABLA RELACIONADA (Generos)
+        var generoDb = await context.Generos.FirstOrDefaultAsync(g => g.Nombre == generoFormulario);
+        if (generoDb == null)
+        {
+            generoDb = new Genero { Nombre = generoFormulario };
+            context.Generos.Add(generoDb);
+            await context.SaveChangesAsync();
+        }
+
+        // Asignamos el ID foráneo
+        beatFormulario.GeneroId = generoDb.Id;
+
         context.Beats.Add(beatFormulario);
         await context.SaveChangesAsync();
-        listaBeats = await context.Beats.ToListAsync();
+
+        // Refrescamos la lista trayendo la relación
+        listaBeats = await context.Beats.Include(b => b.Genero).ToListAsync();
 
         beatFormulario = new();
         archivoSeleccionado = null;
@@ -197,7 +245,7 @@
     {
         beatEnEdicion = beat;
         nombreEdicion = beat.Nombre;
-        generoEdicion = beat.Genero;
+        generoEdicion = beat.Genero?.Nombre ?? "Trap";
     }
 
     private async Task GuardarEdicion()
@@ -205,12 +253,32 @@
         if (beatEnEdicion != null)
         {
             using var context = DbFactory.CreateDbContext();
-            beatEnEdicion.Nombre = nombreEdicion;
-            beatEnEdicion.Genero = generoEdicion;
-            context.Beats.Update(beatEnEdicion);
-            await context.SaveChangesAsync();
-            listaBeats = await context.Beats.ToListAsync();
-            beatEnEdicion = null;
+
+            // 1. Buscamos el beat "fresco" en la base de datos para no confundir la memoria
+            var beatFresco = await context.Beats.FindAsync(beatEnEdicion.Id);
+
+            if (beatFresco != null)
+            {
+                // 2. Buscamos o creamos el género
+                var generoDb = await context.Generos.FirstOrDefaultAsync(g => g.Nombre == generoEdicion);
+                if (generoDb == null)
+                {
+                    generoDb = new Genero { Nombre = generoEdicion };
+                    context.Generos.Add(generoDb);
+                    await context.SaveChangesAsync();
+                }
+
+                // 3. Actualizamos los datos en el beat fresco
+                beatFresco.Nombre = nombreEdicion;
+                beatFresco.GeneroId = generoDb.Id;
+
+                // Guardamos los cambios reales
+                await context.SaveChangesAsync();
+
+                // Recargamos la lista limpia
+                listaBeats = await context.Beats.Include(b => b.Genero).ToListAsync();
+                beatEnEdicion = null;
+            }
         }
     }
 
@@ -221,7 +289,7 @@
             using var context = DbFactory.CreateDbContext();
             context.Beats.Remove(beatEnEdicion);
             await context.SaveChangesAsync();
-            listaBeats = await context.Beats.ToListAsync();
+            listaBeats = await context.Beats.Include(b => b.Genero).ToListAsync();
             beatEnEdicion = null;
         }
     }

@@ -12,13 +12,13 @@
 
     <div class="contenido-principal" style="position: relative; z-index: 10;">
 
-        <!-- BARRA UNIFICADA -->
+        <!-- BARRA UNIFICADA SIN EMOJIS -->
         <nav style="background: rgba(17, 17, 17, 0.9); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f39c12; margin-bottom: 20px; border-radius: 8px;">
             <div style="display: flex; align-items: center; gap: 30px;">
                 <h2 style="color: #f39c12; margin: 0; font-size: 2.5em; font-weight: 900; letter-spacing: 1px;">CHEESE RECORDS</h2>
-                <a href="/" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">💿 Catálogo</a>
-                <a href="/dashboard" style="color: #f39c12; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">📊 Dashboard</a>
-                <a href="/artistas" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">🎤 Crew</a>
+                <a href="/" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">Catálogo</a>
+                <a href="/dashboard" style="color: #f39c12; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">Dashboard</a>
+                <a href="/artistas" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">Crew</a>
             </div>
             <!-- Contrapeso derecho invisible -->
             <div style="width: 180px;"></div>
@@ -44,16 +44,16 @@
                 @foreach (var stat in beatsPorGenero)
                 {
                     <div style="background: #222; padding: 20px 30px; border-radius: 8px; text-align: center; border-left: 4px solid #3498db; min-width: 150px; position: relative; cursor: pointer;"
-                         @onmouseover="() => MostrarCanciones(stat.Key.ToString())"
+                         @onmouseover="() => MostrarCanciones(stat.Key)"
                          @onmouseout="OcultarCanciones">
 
                         <p style="color: #aaa; margin: 0; font-size: 0.9em; font-weight: bold; text-transform: uppercase;">@stat.Key</p>
                         <h2 style="color: #fff; margin: 10px 0 0 0; font-size: 2.5em;">@stat.Value</h2>
 
-                        @if (generoSeleccionado == stat.Key.ToString())
+                        @if (generoSeleccionado == stat.Key)
                         {
                             <div style="position: absolute; top: 100%; left: 0; width: 100%; background: #444; border-radius: 5px; padding: 10px; margin-top: 5px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); z-index: 100;">
-                                @foreach (var cancion in listaBeats.Where(b => b.Genero == stat.Key))
+                                @foreach (var cancion in listaBeats.Where(b => (b.Genero?.Nombre ?? "Sin género") == stat.Key))
                                 {
                                     <p style="color: white; margin: 5px 0; font-size: 0.8em; text-align: left; border-bottom: 1px solid #555; padding-bottom: 2px;">🎵 @cancion.Nombre</p>
                                 }
@@ -88,16 +88,23 @@
 @code {
     private int totalBeats = 0;
     private List<Beat> listaBeats = new();
-    private Dictionary<GeneroMusical, int> beatsPorGenero = new();
+
+    // Cambiamos el enum viejo por un string para que lea la tabla nueva
+    private Dictionary<string, int> beatsPorGenero = new();
 
     private string generoSeleccionado = "";
 
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        listaBeats = await context.Beats.ToListAsync();
+
+        // Incluimos la tabla Genero relacionada
+        listaBeats = await context.Beats.Include(b => b.Genero).ToListAsync();
         totalBeats = listaBeats.Count;
-        beatsPorGenero = listaBeats.GroupBy(b => b.Genero).ToDictionary(g => g.Key, g => g.Count());
+
+        // Agrupamos usando el nombre directo de la nueva tabla
+        beatsPorGenero = listaBeats.GroupBy(b => b.Genero?.Nombre ?? "Sin género")
+                                   .ToDictionary(g => g.Key, g => g.Count());
     }
 
     private void MostrarCanciones(string genero) => generoSeleccionado = genero;

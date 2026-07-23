@@ -16,5 +16,10 @@ public class AppDbContext : DbContext
         }
     }
 
+    // AQUÍ ESTÁN LAS 5 TABLAS RELACIONADAS
     public DbSet<Beat> Beats { get; set; }
+    public DbSet<Artista> Artistas { get; set; }
+    public DbSet<Genero> Generos { get; set; }
+    public DbSet<Licencia> Licencias { get; set; }
+    public DbSet<Album> Albumes { get; set; }
 }
