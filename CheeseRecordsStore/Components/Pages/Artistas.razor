@@ -3,18 +3,96 @@
 
 <PageTitle> CHEESE RECORDS</PageTitle>
 
+<style>
+    /* Efecto hover para las imágenes del crew en la cara frontal */
+    .img-crew-hover {
+        transition: transform 0.4s ease-in-out;
+    }
+
+        .img-crew-hover:hover {
+            transform: scale(1.08);
+        }
+
+    /* CONTENEDOR 3D PARA LAS CARTAS */
+    .tarjeta-flip-container {
+        background-color: transparent;
+        width: 300px;
+        height: 480px;
+        perspective: 1000px; /* Crea el efecto de profundidad */
+    }
+
+    /* LA TARJETA QUE GIRA */
+    .tarjeta-flip {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        transition: transform 0.7s cubic-bezier(0.4, 0.2, 0.2, 1);
+        transform-style: preserve-3d;
+        cursor: pointer;
+    }
+
+        /* CLASE QUE SE ACTIVA EN C# PARA VOLTEARLA */
+        .tarjeta-flip.volteada {
+            transform: rotateY(180deg);
+        }
+
+    /* ESTILOS COMPARTIDOS PARA AMBAS CARAS */
+    .cara-frente, .cara-atras {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden; /* Oculta la parte trasera cuando no se ve */
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        background: rgba(34, 34, 34, 0.9);
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* CONFIGURACIÓN DE LA CARA TRASERA */
+    .cara-atras {
+        transform: rotateY(180deg); /* Empieza girada de espaldas */
+        background: rgba(20, 20, 20, 0.95);
+        padding: 30px 20px;
+        justify-content: center;
+    }
+
+    /* ESTILOS PARA LOS DATOS DE LA CARTA */
+    .dato-fila {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid #444;
+        padding: 10px 0;
+        font-size: 0.9em;
+    }
+
+    .dato-etiqueta {
+        color: #aaa;
+        font-weight: bold;
+    }
+
+    .dato-valor {
+        color: #fff;
+        font-weight: bold;
+        text-align: right;
+    }
+</style>
+
 <div class="contenedor-pagina">
     <div class="capa-oscura"></div>
 
     <div class="contenido-principal" style="position: relative; z-index: 10;">
 
-        <!-- BARRA UNIFICADA -->
+        <!-- BARRA UNIFICADA SIN EMOJIS -->
         <nav style="background: rgba(17, 17, 17, 0.9); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f39c12; margin-bottom: 20px; border-radius: 8px;">
             <div style="display: flex; align-items: center; gap: 30px;">
                 <h2 style="color: #f39c12; margin: 0; font-size: 2.5em; font-weight: 900; letter-spacing: 1px;">CHEESE RECORDS</h2>
-                <a href="/" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">💿 Catálogo</a>
-                <a href="/dashboard" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">📊 Dashboard</a>
-                <a href="/artistas" style="color: #f39c12; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">🎤 Crew</a>
+                <a href="/" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">Catálogo</a>
+                <a href="/dashboard" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">Dashboard</a>
+                <a href="/artistas" style="color: #f39c12; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">Crew</a>
             </div>
             <!-- Contrapeso derecho invisible -->
             <div style="width: 180px;"></div>
@@ -36,28 +114,93 @@
             <div style="display: flex; gap: 40px; justify-content: center; flex-wrap: wrap;">
 
                 <!-- TARJETA ARTISTA 1 (GASKKA) -->
-                <div style="background: rgba(34, 34, 34, 0.9); border-radius: 15px; border: 1px solid #444; width: 300px; overflow: hidden; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.5); display: flex; flex-direction: column;">
-                    <!-- Contenedor de la foto tamaño completo -->
-                    <div style="width: 100%; height: 400px; border-bottom: 4px solid #f39c12;">
-                        <img src="images/mifoto.jpg" alt="GASKKA" style="width: 100%; height: 100%; object-fit: cover; object-position: top;" onerror="this.src='https://via.placeholder.com/300x400/111/f39c12?text=FOTO'" />
-                    </div>
-                    <!-- Contenedor de la información -->
-                    <div style="padding: 20px;">
-                        <h2 style="color: #fff; margin: 0 0 5px 0; font-size: 1.8em; font-weight: 900;">GASKKA</h2>
-                        <p style="color: #f39c12; margin: 0; font-size: 1em; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Fundador / Artista</p>
+                <div class="tarjeta-flip-container" @onclick="VoltearGaskka">
+                    <div class="tarjeta-flip @(gaskkaVolteado ? "volteada" : "")">
+
+                        <!-- CARA FRONTAL GASKKA -->
+                        <div class="cara-frente" style="border: 1px solid #444;">
+                            <div style="width: 100%; height: 380px; border-bottom: 4px solid #f39c12; overflow: hidden;">
+                                <img src="images/mifoto.jpg" class="img-crew-hover" alt="GASKKA" style="width: 100%; height: 100%; object-fit: cover; object-position: top;" onerror="this.src='https://via.placeholder.com/300x400/111/f39c12?text=FOTO'" />
+                            </div>
+                            <div style="padding: 20px;">
+                                <h2 style="color: #fff; margin: 0 0 5px 0; font-size: 1.8em; font-weight: 900;">GASKKA</h2>
+                                <p style="color: #f39c12; margin: 0; font-size: 1em; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Fundador / Artista</p>
+                            </div>
+                        </div>
+
+                        <!-- CARA TRASERA GASKKA -->
+                        <div class="cara-atras" style="border: 2px solid #f39c12;">
+                            <h2 style="color: #f39c12; margin-bottom: 10px; font-weight: 900; font-size: 2.2em; text-transform: uppercase;">GASKKA</h2>
+
+                            <div class="dato-fila">
+                                <span class="dato-etiqueta">NOMBRE</span>
+                                <span class="dato-valor">Luis Gasca Hernandez</span>
+                            </div>
+                            <div class="dato-fila">
+                                <span class="dato-etiqueta">NACIMIENTO</span>
+                                <span class="dato-valor">16 de Oct. de 2003</span>
+                            </div>
+                            <div class="dato-fila">
+                                <span class="dato-etiqueta">EDAD</span>
+                                <span class="dato-valor">22</span>
+                            </div>
+                            <div class="dato-fila">
+                                <span class="dato-etiqueta">SIGNO</span>
+                                <span class="dato-valor">Libra</span>
+                            </div>
+                            <div class="dato-fila">
+                                <span class="dato-etiqueta">COMIDA FAV</span>
+                                <span class="dato-valor">Pizza</span>
+                            </div>
+
+                            <p style="color: #ccc; font-style: italic; margin-top: 20px; line-height: 1.4;">"Ningun sueño es muy grande, y ningun soñador es muy pequeño ."</p>
+                        </div>
                     </div>
                 </div>
 
+
                 <!-- TARJETA ARTISTA 2 (ES EL KLIPPER) -->
-                <div style="background: rgba(34, 34, 34, 0.9); border-radius: 15px; border: 1px solid #444; width: 300px; overflow: hidden; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.5); display: flex; flex-direction: column;">
-                    <!-- Contenedor de la foto tamaño completo -->
-                    <div style="width: 100%; height: 400px; border-bottom: 4px solid #3498db;">
-                        <img src="images/klipper.jpg" alt="ES EL KLIPPER" style="width: 100%; height: 100%; object-fit: cover; object-position: top;" onerror="this.src='https://via.placeholder.com/300x400/111/3498db?text=FOTO'" />
-                    </div>
-                    <!-- Contenedor de la información -->
-                    <div style="padding: 20px;">
-                        <h2 style="color: #fff; margin: 0 0 5px 0; font-size: 1.8em; font-weight: 900;">ES EL KLIPPER</h2>
-                        <p style="color: #3498db; margin: 0; font-size: 1em; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Fundador / Productor</p>
+                <div class="tarjeta-flip-container" @onclick="VoltearKlipper">
+                    <div class="tarjeta-flip @(klipperVolteado ? "volteada" : "")">
+
+                        <!-- CARA FRONTAL KLIPPER -->
+                        <div class="cara-frente" style="border: 1px solid #444;">
+                            <div style="width: 100%; height: 380px; border-bottom: 4px solid #3498db; overflow: hidden;">
+                                <img src="images/klipper.jpg" class="img-crew-hover" alt="ES EL KLIPPER" style="width: 100%; height: 100%; object-fit: cover; object-position: top;" onerror="this.src='https://via.placeholder.com/300x400/111/3498db?text=FOTO'" />
+                            </div>
+                            <div style="padding: 20px;">
+                                <h2 style="color: #fff; margin: 0 0 5px 0; font-size: 1.8em; font-weight: 900;">ES EL KLIPPER</h2>
+                                <p style="color: #3498db; margin: 0; font-size: 1em; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Fundador / Productor</p>
+                            </div>
+                        </div>
+
+                        <!-- CARA TRASERA KLIPPER -->
+                        <div class="cara-atras" style="border: 2px solid #3498db;">
+                            <h2 style="color: #3498db; margin-bottom: 10px; font-weight: 900; font-size: 2em; text-transform: uppercase;">ES EL KLIPPER</h2>
+
+                            <div class="dato-fila">
+                                <span class="dato-etiqueta">NOMBRE</span>
+                                <span class="dato-valor">Christopher Sanchez Hdz</span>
+                            </div>
+                            <div class="dato-fila">
+                                <span class="dato-etiqueta">NACIMIENTO</span>
+                                <span class="dato-valor">28 de Ene. del 2003</span>
+                            </div>
+                            <div class="dato-fila">
+                                <span class="dato-etiqueta">EDAD</span>
+                                <span class="dato-valor">22</span>
+                            </div>
+                            <div class="dato-fila">
+                                <span class="dato-etiqueta">SIGNO</span>
+                                <span class="dato-valor">Acuario</span>
+                            </div>
+                            <div class="dato-fila">
+                                <span class="dato-etiqueta">COMIDA FAV</span>
+                                <span class="dato-valor">Lasaña</span>
+                            </div>
+
+                            <p style="color: #ccc; font-style: italic; margin-top: 20px; line-height: 1.4;">"Si el beat no te rompe el cuello, no sale del estudio."</p>
+                        </div>
                     </div>
                 </div>
 
@@ -68,5 +211,18 @@
 </div>
 
 @code {
-    // Lógica del crew
+    // Variables para controlar qué carta está volteada
+    private bool gaskkaVolteado = false;
+    private bool klipperVolteado = false;
+
+    // Métodos que se disparan al hacer clic en las cartas
+    private void VoltearGaskka()
+    {
+        gaskkaVolteado = !gaskkaVolteado;
+    }
+
+    private void VoltearKlipper()
+    {
+        klipperVolteado = !klipperVolteado;
+    }
 }

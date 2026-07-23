@@ -1,31 +1,54 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
 namespace CheeseRecordsStore.Models
-
 {
-    public enum GeneroMusical
+    public class Artista
     {
-        Cumbia,
-        Reggeaton,
-        HipHop,
-        Trap,
-        Rap,
-        Corridos,
-        Dembow,
-        RnB,
-        Pop
+        public int Id { get; set; }
+        public string NombreArtistico { get; set; } = "";
+        public string Rol { get; set; } = "";
+        public List<Album> Albumes { get; set; } = new();
     }
+
+    public class Genero
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = "";
+        public List<Beat> Beats { get; set; } = new();
+    }
+
+    public class Licencia
+    {
+        public int Id { get; set; }
+        public string Tipo { get; set; } = "";
+        public decimal Precio { get; set; }
+        public List<Beat> Beats { get; set; } = new();
+    }
+
+    public class Album
+    {
+        public int Id { get; set; }
+        public string Titulo { get; set; } = "";
+        public int ArtistaId { get; set; }
+        public Artista Artista { get; set; } = null!;
+        public List<Beat> Beats { get; set; } = new();
+    }
+
     public class Beat
     {
-        public GeneroMusical Genero { get; set; }
-
-        [Key] // Esto le dice a PostgreSQL que este es el ID principal
         public int Id { get; set; }
-
-        [Required(ErrorMessage = "¡Hey! Olvidaste ponerle nombre al beat.")]
+        [Required(ErrorMessage = "El nombre es obligatorio")]
         public string Nombre { get; set; } = "";
-
-        [Required(ErrorMessage = "El archivo de la portada es obligatorio.")]
         public string ImagenUrl { get; set; } = "";
+
+        // Relaciones (Claves foráneas)
+        public int? GeneroId { get; set; }
+        public Genero? Genero { get; set; }
+
+        public int? AlbumId { get; set; }
+        public Album? Album { get; set; }
+
+        public int? LicenciaId { get; set; }
+        public Licencia? Licencia { get; set; }
     }
 }

@@ -1,0 +1,21 @@
+﻿{
+  "name": "Cheese Records",
+  "short_name": "Cheese",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#f39c12",
+  "description": "Plataforma oficial de Cheese Records.",
+  "icons": [
+    {
+      "src": "images/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "images/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
