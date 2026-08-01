@@ -11,65 +11,170 @@
 
 <PageTitle>Inicio - CHEESE RECORDS</PageTitle>
 
+<style>
+    .tarjeta-contenedor {
+        perspective: 1000px;
+        width: 100%;
+        height: 420px; /* Mas altura para que quepa el reproductor */
+        margin: 0 auto;
+    }
+
+    .tarjeta-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+        transform-style: preserve-3d;
+        cursor: pointer;
+    }
+
+        .tarjeta-inner.volteada {
+            transform: rotateY(180deg);
+        }
+
+    .cara-frente, .cara-atras {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 12px;
+        overflow: hidden;
+        background-color: #1a202c;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.5);
+    }
+
+    .cara-frente {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .cara-atras {
+        transform: rotateY(180deg);
+        border: 1px solid #4a5568;
+        padding: 20px;
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+        .cara-atras::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .cara-atras::-webkit-scrollbar-thumb {
+            background-color: #f39c12;
+            border-radius: 2px;
+        }
+
+    .btn-editar-tarjeta:hover {
+        background-color: #e74c3c !important;
+        border-color: #e74c3c !important;
+    }
+
+    /* Estilos para el reproductor de audio */
+    audio::-webkit-media-controls-panel {
+        background-color: #2c3e50;
+    }
+
+    audio::-webkit-media-controls-current-time-display,
+    audio::-webkit-media-controls-time-remaining-display {
+        color: #fff;
+    }
+</style>
+
 <div class="contenedor-pagina">
     <div class="capa-oscura"></div>
 
     <div class="contenido-principal" style="position: relative; z-index: 10;">
 
-        <!-- BARRA UNIFICADA -->
         <nav style="background: rgba(17, 17, 17, 0.9); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f39c12; margin-bottom: 20px; border-radius: 8px;">
             <div style="display: flex; align-items: center; gap: 30px;">
                 <h2 style="color: #f39c12; margin: 0; font-size: 2.5em; font-weight: 900; letter-spacing: 1px;">CHEESE RECORDS</h2>
-                <a href="/" style="color: #f39c12; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">Catálogo</a>
+                <a href="/" style="color: #f39c12; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">Catalogo</a>
                 <a href="/dashboard" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">Dashboard</a>
                 <a href="/artistas" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: 0.3s;">Crew</a>
             </div>
-            <!-- Contrapeso derecho -->
             <div style="width: 180px; text-align: right;">
                 <button class="btn-azul" @onclick="AbrirModalAgregar" style="width: 100%; padding: 10px 20px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-                    ➕ Agregar Beat
+                    + Agregar Beat
                 </button>
             </div>
         </nav>
 
-        <!-- LEMA SIEMPRE VISIBLE -->
         <header style="text-align: center; margin-bottom: 45px; margin-top: 10px;">
             <p style="color: #e0e0e0; font-size: 1.35em; font-style: italic; letter-spacing: 1.5px; font-weight: 500; text-shadow: 1px 1px 3px rgba(0,0,0,0.8);">
                 "Hijos de la suerte | La calle y la disciplina crean el talento de barrio | Repartiendo el queso"
             </p>
         </header>
 
-        <!-- CATÁLOGO DE BEATS -->
-        <section class="cuadricula-beats">
+        <section class="cuadricula-beats" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 25px; padding: 20px;">
             @if (listaBeats == null)
             {
-                <p>Cargando...</p>
+                <p style="color: white;">Cargando...</p>
             }
             else
             {
                 @foreach (var beat in listaBeats)
                 {
-                    <div class="tarjeta-beat">
-                        <img src="images/@beat.ImagenUrl" alt="Portada @beat.Nombre" />
-                        <h2>@beat.Nombre</h2>
-                        <!-- Aquí leemos el nombre del género desde la nueva tabla relacionada -->
-                        <p style="color: #ccc; font-size: 0.9em; margin-bottom: 10px;">@(beat.Genero?.Nombre ?? "Sin género")</p>
-                        <button class="btn-lapiz" @onclick="() => AbrirEdicion(beat)">✏️</button>
+                    <div class="tarjeta-contenedor">
+                        <div class="tarjeta-inner @(tarjetasVolteadas.Contains(beat.Id) ? "volteada" : "")">
+
+                            <!-- CARA FRONTAL -->
+                            <div class="cara-frente" @onclick="() => AlternarTarjeta(beat.Id)">
+                                <img src="images/@beat.ImagenUrl" alt="Portada @beat.Nombre" style="width: 100%; height: 210px; object-fit: contain; background-color: #0b0f19; border-bottom: 3px solid #f39c12;" />
+
+                                <div style="display: flex; flex-direction: column; justify-content: space-between; height: calc(100% - 210px); padding: 12px 15px;">
+                                    <div style="text-align: center;">
+                                        <h2 style="margin: 0 0 3px 0; color: #ffffff; font-size: 1.3em; font-weight: 800; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@beat.Nombre</h2>
+                                        <p style="color: #f39c12; font-size: 0.85em; font-weight: bold; margin: 0; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@(string.IsNullOrEmpty(beat.NombresArtistas) ? "Artista Desconocido" : beat.NombresArtistas)</p>
+                                    </div>
+
+                                    <!-- REPRODUCTOR DE AUDIO INTEGRADO -->
+                                    @if (!string.IsNullOrEmpty(beat.AudioUrl))
+                                    {
+                                        <div style="margin-top: 5px; margin-bottom: 5px; text-align: center;" @onclick:stopPropagation="true">
+                                            <audio controls controlsList="nodownload" style="width: 100%; height: 35px; outline: none;">
+                                                <source src="musica/@beat.AudioUrl" type="audio/mpeg">
+                                            </audio>
+                                        </div>
+                                    }
+
+                                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 8px;">
+                                        <span style="background: rgba(255, 255, 255, 0.1); color: #a0aec0; padding: 4px 10px; border-radius: 12px; font-size: 0.75em; font-weight: bold; text-transform: uppercase;">@(beat.Genero?.Nombre ?? "Sin genero")</span>
+                                        <button class="btn-editar-tarjeta" style="background: #2c3e50; color: #fff; border: 1px solid #4a5568; padding: 4px 12px; border-radius: 12px; font-size: 0.75em; font-weight: bold; cursor: pointer; transition: 0.2s;" @onclick="() => AbrirEdicion(beat)" @onclick:stopPropagation="true">
+                                            Editar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CARA TRASERA -->
+                            <div class="cara-atras" @onclick="() => AlternarTarjeta(beat.Id)">
+                                <h3 style="color: #f39c12; text-align: center; margin-bottom: 10px; font-size: 1.3em;">@beat.Nombre</h3>
+                                <h4 style="color: #a0aec0; font-size: 0.85em; text-transform: uppercase; margin-bottom: 5px;">Letra</h4>
+                                <p style="white-space: pre-wrap; font-size: 0.85em; line-height: 1.5; margin: 0;">
+                                    @(string.IsNullOrEmpty(beat.Letra) ? "La letra de esta cancion aun no esta disponible." : beat.Letra)
+                                </p>
+                            </div>
+
+                        </div>
                     </div>
                 }
             }
         </section>
 
-        <!-- BANNER DE CONTACTO (EFECTO CRISTAL NARANJA) -->
         <section style="background: rgba(243, 156, 18, 0.4); backdrop-filter: blur(6px); border: 1px solid rgba(243, 156, 18, 0.5); padding: 40px 20px; border-radius: 10px; margin-top: 50px; margin-bottom: 20px; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.5);">
             <h2 style="color: #fff; margin-bottom: 15px; font-weight: 900; font-size: 2.2em; text-transform: uppercase; text-shadow: 2px 2px 5px rgba(0,0,0,0.8);">¿Listo para grabar?</h2>
             <p style="color: #eee; font-size: 1.2em; font-weight: bold; max-width: 600px; margin: 0 auto 25px auto; text-shadow: 1px 1px 4px rgba(0,0,0,0.9);">
-                ¿Te apasiona la música y no sabes por dónde empezar? En Cheese Records te producimos. Contáctanos y hagamos el próximo hit.
+                ¿Te apasiona la musica y no sabes por donde empezar? En Cheese Records te producimos. Contactanos y hagamos el proximo hit.
             </p>
-            <a href="https://wa.me/522231759353?text=¡Qué%20onda!%20Vengo%20de%20la%20página%20de%20Cheese%20Records%20y%20quiero%20hacer%20un%20hit."
+            <a href="https://wa.me/522231759353?text=Que%20onda%20Vengo%20de%20la%20pagina%20de%20Cheese%20Records%20y%20quiero%20hacer%20un%20hit"
                target="_blank"
                style="display: inline-block; background: #111; color: #f39c12; padding: 15px 35px; border-radius: 30px; font-weight: bold; font-size: 1.2em; text-decoration: none; box-shadow: 0 5px 15px rgba(0,0,0,0.6); transition: transform 0.2s;">
-                💬 Enviar mensaje
+                Enviar mensaje
             </a>
         </section>
 
@@ -82,20 +187,22 @@
             <div class="modal-contenido">
                 <h3>Nuevo Beat</h3>
 
-                <!-- SEGURO ANTI-DUPLICADOS (Alerta visual) -->
                 @if (!string.IsNullOrEmpty(mensajeError))
                 {
                     <div style="background-color: #e74c3c; color: white; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-weight: bold; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-                        ⚠️ @mensajeError
+                        Alerta: @mensajeError
                     </div>
                 }
 
                 <EditForm Model="beatFormulario" OnValidSubmit="AgregarBeat">
                     <DataAnnotationsValidator />
+
                     <InputText @bind-Value="beatFormulario.Nombre" placeholder="Nombre de la pista" class="input-menu" />
                     <ValidationMessage For="@(() => beatFormulario.Nombre)" class="texto-error" />
 
-                    <label class="etiqueta-archivo" style="margin-top: 10px; display: block;">Género Musical:</label>
+                    <InputText @bind-Value="beatFormulario.NombresArtistas" placeholder="Artistas (ej. GASKKA)" class="input-menu" style="margin-top: 10px;" />
+
+                    <label class="etiqueta-archivo" style="margin-top: 10px; display: block;">Genero Musical:</label>
                     <InputSelect @bind-Value="generoFormulario" class="input-menu">
                         <option value="Cumbia">Cumbia</option>
                         <option value="Reggeaton">Reggeaton</option>
@@ -108,9 +215,16 @@
                         <option value="Pop">Pop</option>
                     </InputSelect>
 
-                    <label class="etiqueta-archivo" style="margin-top: 10px; display: block;">Portada del Beat:</label>
+                    <label class="etiqueta-archivo" style="margin-top: 10px; display: block;">Letra de la cancion:</label>
+                    <InputTextArea @bind-Value="beatFormulario.Letra" placeholder="Escribe o pega la letra aqui..." class="input-menu" style="min-height: 80px; resize: vertical;" />
+
+                    <label class="etiqueta-archivo" style="margin-top: 10px; display: block;">Portada del Beat (Imagen):</label>
                     <InputFile OnChange="CargarImagen" class="input-menu" accept="image/*" />
                     <ValidationMessage For="@(() => beatFormulario.ImagenUrl)" class="texto-error" />
+
+                    <!-- NUEVO CAMPO PARA AUDIO -->
+                    <label class="etiqueta-archivo" style="margin-top: 10px; display: block;">Archivo de Audio (MP3/WAV):</label>
+                    <InputFile OnChange="CargarAudio" class="input-menu" accept="audio/*" />
 
                     <div class="modal-botones" style="margin-top: 20px;">
                         <button type="submit" class="btn-azul">Subir Beat</button>
@@ -127,9 +241,11 @@
         <div class="modal-fondo">
             <div class="modal-contenido">
                 <h3>Editar Beat</h3>
-                <input @bind="nombreEdicion" placeholder="Nombre" class="input-menu" />
 
-                <select @bind="generoEdicion" class="input-menu" style="margin-top: 10px; margin-bottom: 15px;">
+                <input @bind="nombreEdicion" placeholder="Nombre" class="input-menu" />
+                <input @bind="artistasEdicion" placeholder="Artistas" class="input-menu" style="margin-top: 10px;" />
+
+                <select @bind="generoEdicion" class="input-menu" style="margin-top: 10px;">
                     <option value="Cumbia">Cumbia</option>
                     <option value="Reggeaton">Reggeaton</option>
                     <option value="HipHop">Hip-Hop</option>
@@ -141,7 +257,9 @@
                     <option value="Pop">Pop</option>
                 </select>
 
-                <div class="modal-botones">
+                <textarea @bind="letraEdicion" placeholder="Letra" class="input-menu" style="margin-top: 10px; min-height: 80px; resize: vertical;"></textarea>
+
+                <div class="modal-botones" style="margin-top: 15px;">
                     <button class="btn-azul" @onclick="GuardarEdicion">Guardar</button>
                     <button class="btn-rojo" @onclick="EliminarDesdeEdicion">Eliminar</button>
                     <button class="btn-gris" @onclick="CerrarEdicion">Cancelar</button>
@@ -156,20 +274,36 @@
     private Beat beatFormulario = new();
     private Beat? beatEnEdicion = null;
 
-    // Variables para los formularios y alertas
+    private HashSet<int> tarjetasVolteadas = new();
+
     private string nombreEdicion = "";
     private string generoEdicion = "Trap";
+    private string artistasEdicion = "";
+    private string letraEdicion = "";
+
     private string generoFormulario = "Trap";
     private string mensajeError = "";
 
     private IBrowserFile? archivoSeleccionado;
+    private IBrowserFile? archivoAudioSeleccionado; // Variable para el audio
     private bool mostrarModalAgregar = false;
 
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        // Include(b => b.Genero) asegura que traigamos los datos de la tabla relacionada
         listaBeats = await context.Beats.Include(b => b.Genero).ToListAsync();
+    }
+
+    private void AlternarTarjeta(int beatId)
+    {
+        if (tarjetasVolteadas.Contains(beatId))
+        {
+            tarjetasVolteadas.Remove(beatId);
+        }
+        else
+        {
+            tarjetasVolteadas.Add(beatId);
+        }
     }
 
     private void AbrirModalAgregar()
@@ -183,23 +317,24 @@
         mostrarModalAgregar = false;
         mensajeError = "";
         beatFormulario = new();
+        archivoSeleccionado = null;
+        archivoAudioSeleccionado = null;
     }
 
     private async Task AgregarBeat()
     {
         using var context = DbFactory.CreateDbContext();
 
-        // 1. VALIDACIÓN ANTI-DUPLICADOS
         bool yaExiste = await context.Beats.AnyAsync(b => b.Nombre.ToLower() == beatFormulario.Nombre.ToLower());
         if (yaExiste)
         {
-            mensajeError = $"¡El beat '{beatFormulario.Nombre}' ya existe en el catálogo! Ingresa un nombre diferente.";
-            return; // Detiene el proceso para que no se duplique
+            mensajeError = $"El beat '{beatFormulario.Nombre}' ya existe en el catalogo. Ingresa un nombre diferente.";
+            return;
         }
 
-        mensajeError = ""; // Limpiamos el error si pasa la validación
+        mensajeError = "";
 
-        // 2. GUARDADO DE IMAGEN
+        // 1. Guardar Imagen
         if (archivoSeleccionado != null)
         {
             var rutaCarpeta = Path.Combine(Env.WebRootPath, "images");
@@ -209,7 +344,16 @@
             await archivoSeleccionado.OpenReadStream(maxAllowedSize: 15000000).CopyToAsync(stream);
         }
 
-        // 3. USO DE LA TABLA RELACIONADA (Generos)
+        // 2. Guardar Audio (Limite ampliado a 50MB para archivos MP3/WAV)
+        if (archivoAudioSeleccionado != null)
+        {
+            var rutaCarpetaMusica = Path.Combine(Env.WebRootPath, "musica");
+            if (!Directory.Exists(rutaCarpetaMusica)) Directory.CreateDirectory(rutaCarpetaMusica);
+            var rutaArchivoAudio = Path.Combine(rutaCarpetaMusica, archivoAudioSeleccionado.Name);
+            using var streamAudio = new FileStream(rutaArchivoAudio, FileMode.Create);
+            await archivoAudioSeleccionado.OpenReadStream(maxAllowedSize: 50000000).CopyToAsync(streamAudio);
+        }
+
         var generoDb = await context.Generos.FirstOrDefaultAsync(g => g.Nombre == generoFormulario);
         if (generoDb == null)
         {
@@ -218,17 +362,16 @@
             await context.SaveChangesAsync();
         }
 
-        // Asignamos el ID foráneo
         beatFormulario.GeneroId = generoDb.Id;
 
         context.Beats.Add(beatFormulario);
         await context.SaveChangesAsync();
 
-        // Refrescamos la lista trayendo la relación
         listaBeats = await context.Beats.Include(b => b.Genero).ToListAsync();
 
         beatFormulario = new();
         archivoSeleccionado = null;
+        archivoAudioSeleccionado = null;
         mostrarModalAgregar = false;
     }
 
@@ -241,11 +384,22 @@
         }
     }
 
+    private void CargarAudio(InputFileChangeEventArgs e)
+    {
+        if (e.File != null)
+        {
+            archivoAudioSeleccionado = e.File;
+            beatFormulario.AudioUrl = e.File.Name;
+        }
+    }
+
     private void AbrirEdicion(Beat beat)
     {
         beatEnEdicion = beat;
         nombreEdicion = beat.Nombre;
         generoEdicion = beat.Genero?.Nombre ?? "Trap";
+        artistasEdicion = beat.NombresArtistas ?? "";
+        letraEdicion = beat.Letra ?? "";
     }
 
     private async Task GuardarEdicion()
@@ -254,12 +408,10 @@
         {
             using var context = DbFactory.CreateDbContext();
 
-            // 1. Buscamos el beat "fresco" en la base de datos para no confundir la memoria
             var beatFresco = await context.Beats.FindAsync(beatEnEdicion.Id);
 
             if (beatFresco != null)
             {
-                // 2. Buscamos o creamos el género
                 var generoDb = await context.Generos.FirstOrDefaultAsync(g => g.Nombre == generoEdicion);
                 if (generoDb == null)
                 {
@@ -268,14 +420,13 @@
                     await context.SaveChangesAsync();
                 }
 
-                // 3. Actualizamos los datos en el beat fresco
                 beatFresco.Nombre = nombreEdicion;
                 beatFresco.GeneroId = generoDb.Id;
+                beatFresco.NombresArtistas = artistasEdicion;
+                beatFresco.Letra = letraEdicion;
 
-                // Guardamos los cambios reales
                 await context.SaveChangesAsync();
 
-                // Recargamos la lista limpia
                 listaBeats = await context.Beats.Include(b => b.Genero).ToListAsync();
                 beatEnEdicion = null;
             }

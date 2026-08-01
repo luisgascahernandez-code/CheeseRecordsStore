@@ -41,7 +41,13 @@ namespace CheeseRecordsStore.Models
         public string Nombre { get; set; } = "";
         public string ImagenUrl { get; set; } = "";
 
-        // Relaciones (Claves foráneas)
+        public string? Letra { get; set; }
+        public string? NombresArtistas { get; set; }
+
+        // Campo para el archivo de audio
+        public string? AudioUrl { get; set; }
+
+        // Relaciones (Claves foraneas)
         public int? GeneroId { get; set; }
         public Genero? Genero { get; set; }
 
